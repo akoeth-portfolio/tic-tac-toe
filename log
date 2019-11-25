@@ -1,0 +1,421 @@
+add scrolling to chat window --- solved
+
+check if after socket disconnect and new socket replace old socket chat functionality still works proper --- solved
+
+another problem: all the message for disconnect aren't displayed except when triggered by timeout. --- solved
+
+if only one player player info don't show the according infos. --- solved
+
+function logout() logout fires only, if socket has be reconnected and then times out, not if it is the first load and then times out -- wtf?!? --- solved
+
+logged out player is beeing reconnected if the other socket connects or reconnects because of function call in conditionals in function roomsAndPlayaz. --- solved
+
+after play game and won start button shows up on second socket and doesn't disappear on click
+
+personalize that shit:
+instead of 'player such and suchs turn' --- 'opponent's name turn' or 'your turn, name'
+instead of 'game over: player ...has won' --- 'game over: you or oppenent's name has won respectively
+
+it says 'two players connected' but there is only one player.
+
+on finish input name there should be your playing agains name of opponent
+
+make name input mandatory - on opening app input field pops up to make it clear to user that name has to be entered befor game can begin.
+
+notify players about disconnect or new connect
+
+what if: two players in a room, one player gets disconnected on timeout 
+1 is the other player still connected?
+2 is the other player notified about the disconnect?
+3 can another player enter the room?
+
+if one socket is disconnected on timeout (doesn't have to be on timeout - normal disconnect does the same thing), if I click a button on the other socket I get:
+
+home/theironduke/webdev/JS_Kurs/Teil_4/TicTacToeWebS/server.js:93
+          obj.player2.emit('enableClient1');        
+                      ^
+
+TypeError: Cannot read property 'emit' of undefined
+   etc....
+
+this shouldn't happen because this line is wrapped in a conditional that ensures the existence of obj.player2 (and obj.player1 for that matter).
+
+
+
+function logout() logout fires only, if socket has be reconnected and then times out, not if it is the first load and then times out -- wtf?!? --- solved
+ 
+solution to the above mentioned problem created a new problem: due to immediate reload on open window conditional 1 and 3 fire and both positions in obj and arr are taken 
+
+possible solution: re-implement routine that has been used in previous version (no gamerooms, viewerArray) to ensure that on browser refresh same position in array is taken.
+
+
+
+if open tab --> reload creates obj.player2 --> if implement function delete obj.player2 it fires always. so if I open second tab (obj.player2) it gets deleted as well. 
+
+how can I avoid that?.....
+
+if obj.player1 already exists don't delete second socket
+
+At first I couldn't find a solution to the above mentioned problem
+
+I turned to a completely different aproach in order to properly implement the disconnect idle socket functionality by moving it outside the gameRoom object (and into the socket.on('connect',...) section)
+using the roomsArray to address the correct instance of the gameRoom object:
+
+for (let = 1; i < roomsArray.length; i++) {
+   if (roomsArray[i].player1.id === id) delete roomsArray[i].player1;
+   if (roomsArray[i].player2.id === id) delete roomsArray[i].player2;
+};
+
+The next step is to give me a blank gamefield (no Xs and Os) on idle socket disconnect --- solved
+
+I have created a method userArray in gameRoom.obj which creates an userArray. This was necessary because I have turned function fnPlayerDisconnect into a method of gameRoom.obj and the original arr 
+which contained the users wasn't accessible from inside this method. Now I am trying to delete userArray elements in accordance with obj.player1 and obj.player2 but so far only one of the 2 elements
+is beeing deleted.
+
+I've solved the problem by simply calling the userArray method from the function playerDisconnect after this function has executed the deletes of player1 and player2. This way the userArray method
+creates an userArray which doesn't contain anything.
+
+So now on idle socket disconnect the gamefield is cleared and chatting is no longer possible.
+
+Next Problem detected: 
+
+after reload socket which has been disconnected on idle socket the chat function doesn't work proberly any more. this doesn't happen if the browser tab is refreshed (no disconnect on idle socket) but 
+the name of player1 in player2's chat window is in quotation marks for some reason.
+
+what are the problems?: 
+
+the player names are not beeing retrieved from session storage  - not true -> they are retrieved but not passed to server and stored in users object (I think)
+
+If the name has to be entered everytime the browser tab is loaded (first load and reload) that wouldn't be a problem
+
+Next step: enter name before start game is mandatory and name is not beeing stored in session Storage
+
+the above has been partly established but if a player is disconnected on idle socket no name entering should be possible. --- solved
+
+
+
+big fat bug: If only player1 exists and enters his name the app breaks with the following: 
+/home/theironduke/webdev/JS_Kurs/Teil_4/TicTacToeWebS/server.js:58
+      if (!obj[obj.player1.id] || !obj[obj.player2.id]) return;
+                                                   ^
+
+TypeError: Cannot read property 'id' of undefined
+
+---- solved
+
+at the moment before name is entered there is no user info at all. add 'Please enter your name' to user info.
+
+also. on disconnect idle socket welcome field and start button are to disappear -- solved
+
+
+
+timer which notifies user about the how long until time out. --- solved
+
+
+your opponent has disconnected is beeing displayed even if a new player has entered the gameRoom. --- solved
+
+
+player2 if inactivity warning is getting interrupted it is still displayed with the last value before interruption
+
+trying to set a conditional: if (durationInSeconds < 11 && name.hasBeenEntered === false) enterNameMessage();  
+but durationInSeconds is always 15 when reset function is called.
+
+I think I might need an switch which is triggered if durationInSeconds < 11.
+
+the above mentioned works but I can't get back to startPlayerInfo and secondPlayerInfo I think. It might by a lot easier to move the idle socket disconnect 
+somewhere else altogether.
+
+I've found a solution by simply store startPlayerInfo and secondPlayerInfo in an object which can be used elsewhere in my code.
+
+
+final challenge:
+
+make it so, that if there is only one player in any given gameRoom a newly connecting player ends up in this gameRoom
+
+conditional 1: no gameRoom - create new gameRoom with player1
+conditional 2: gameRoom is full - create another gameRoom with player1
+conditional 3: gameRoom has player1 - add player2 to existing gameRoom
+conditional 4: gameRoom has player2 - add player1 to existing gameRoom
+
+at the moment - if for example 2 gameRoom and gameRoom 1 has only one player a newly connecting player will create a new gameRoom
+
+Solution: on connect I have to check whether there is a gameRoom in the roomsArray which isn't full.
+
+
+ for (let i = 0; i < roomsArray.length; i++) {      
+   
+      if (roomsArray[i].player1 && !roomsArray[i].player2) {
+        console.log('conditional 5'); 
+        roomsArray[i].player2 = socket;             
+        roomsArray[i].fn();  
+        return;
+      };
+  
+      if (!roomsArray[i].player1 && roomsArray[i].player2) {
+        console.log('conditional 6'); 
+        roomsArray[i].player1 = socket;             
+        roomsArray[i].fn();  
+        return;
+      };      
+};
+
+the above approach turned out to be sucessfull - so: ---solved
+
+ultimate challenge: if two players are alone in their respective rooms, they should be put together with according messages
+
+on disconnect:
+1. remove empty rooms from roomsArray
+2. loop through roomsArray and find rooms that have only one player
+3. take player from first room and add to second room 
+4. remove empty room
+5. implement some kind of notification on who's playing who
+
+
+1. problem:
+if I have 3 rooms and delete player 1 and player 2 of the second room roomsArray only has one room (the first) when it should have two (the first and the second);
+
+the above mentioned problem was due to the methods implemented to remove elements from an array. after finding the best method --- solved
+
+
+
+2. loop through roomsArray and find rooms that have only one player
+
+const uniteLonelyPlayers = () => {
+
+  const roomIndexArr = [];
+
+  for (let i = 0; i < roomsArray.length; i++) {      
+    
+    if (!roomsArray[i].player1 || !roomsArray[i].player2) {
+      roomIndexArr.push[i];    
+      if (roomIndexArr.length === 2) return;
+    };      
+  };
+
+  if (roomsArray[roomIndexArr[0]].player1) const room1Player1 = roomsArray[roomIndexArr[0]].player1;
+  if (roomsArray[roomIndexArr[0]].player2) const room1Player2 = roomsArray[roomIndexArr[0]].player2;
+  if (roomsArray[roomIndexArr[1]].player1) const room2Player1 = roomsArray[roomIndexArr[1]].player1;
+  if (roomsArray[roomIndexArr[1]].player2) const room2Player2 = roomsArray[roomIndexArr[1]].player2;
+
+
+  if (!room1Player1 && room2Player1) roomsArray[roomIndexArr[0].player1]] = roomsArray[roomIndexArr[1].player1]];
+  if (!room1Player1 && room2Player2) roomsArray[roomIndexArr[0].player1]] = roomsArray[roomIndexArr[1].player2]];
+
+  if (!room1Player2 && room2Player1) roomsArray[roomIndexArr[0].player2]] = roomsArray[roomIndexArr[1].player1]];
+  if (!room1Player2 && room2Player2) roomsArray[roomIndexArr[0].player2]] = roomsArray[roomIndexArr[1].player2]];
+
+  roomsArray = roomsArray.filter(el => el != roomsArray[roomIndexArr[1]);
+
+};
+
+
+it only works if I disable the lines which use filter to remove empty rooms from the roomsArray 
+( roomsArray = roomsArray.filter(el => el != roomsArray[i]); )
+
+and if I close room 2 player 2 and then room 1 player 1 
+
+and if I enter the names after closing the above mentioned browser tab rather then before
+
+
+what if I close room 1 player 1 first, then room 2 player 2? - it doesn't work.
+
+what if I enable roomsArray = roomsArray.filter(el => el != roomsArray[i])? - it works.
+
+
+
+
+whole new prob:
+
+if I open two gameRooms and enter names everywhere - than close tabs according to conditional 1 I get an error if I start a game.
+on move obj.player2 is lost - crazy!!!
+
+
+
+if I open two gameRooms and enter names only in the tabs that don't get closed - no error.
+
+
+solution:
+
+I copy obj.player2 --> obj.player2backup = obj.player2;
+
+if uniteLonelyPlayers() fires, for some reason in some sections of my code obj.player1 and/or obj.player2 get lost and the code breaks. Hence the backup. If I use the backup version of the object
+the code doesn't break. 
+
+
+
+another prob:
+
+after gameover disable buttons doesn't work -- solved
+
+also:  there are still alot of use cases in which two players can't play
+
+2 gameRooms - 2 player each and 1 gameRoom - only one player - delete both players of second gameRoom and 2nd player of 1st gameRoom so 
+
+player 1 of 1st gameRoom and player 1 of 3rd gameRoom are beeing united - both have start button and the game doesn't work.
+
+---- solved
+
+prob: reload breaks the code
+
+reload should delete socket and put new socket in same position
+
+open tree tabs --> close the middle one --> reload the first one --> get 2 gameRooms with 1 player each when there should be one one gameRoom with two players.
+
+detect reload.
+
+after uniteLonelyPlayers() has fired, on reload it acts as if socket was still occupied. so it creates new room.
+
+why does it think socket is still occupied?
+
+
+
+on reload:
+
+tab is beeing closed
+
+server side: on disconnect --> playerDisconnect() deletes gameRoom[i].player --> calls fnPlayerDisconnect() which deletes obj[obj.player1.id]; and calls deleteEmptyRooms()
+
+server side: on connect --> roomsAndPlayaz() put new socket in its correct place 
+
+
+correction: after uniteLonelyPlayers() has fired, apparently both obj.player1 and obj.player2 are undefined (on reload conditional 1 fires in roomsAndPlayaz());
+
+so presumably something happens in uniteLonelyPlayers();
+
+
+Disconnect roomsArray[0].player1: [object Object] & roomsArray[0].player2: no have
+connect roomsArray[0].player1: [object Object] & roomsArray[0].player2: no have
+connect roomsArray[1].player1: [object Object] & roomsArray[1].player2: no have
+
+
+Disconnect roomsArray[0].player1: [object Object] & roomsArray[0].player2: no have
+connect roomsArray[0].player1: [object Object] & roomsArray[0].player2: [object Object]
+
+
+turns out I had to make sure that conditional 1 in roomsAndPlayaz() is indeed only used if there are no gameRooms at all. Adding a !roomsArray[0] makes sure of that. Now the correct conditional 
+(conditional 2 or conditional 3) is beeing used. so ----- solved
+
+problem: click on buttons doesn't do anything.
+
+reason: firefox doesn't know path property of the click event object - solution: use e.composedPath() instead of e.path --- solved
+
+
+
+notifications:
+
+if player disconnects info to other player: "Name has disconnected" on #Info1 and clear #Info3  ---- solved
+
+
+
+
+
+on uniteLonelyPlayers() 
+
+player that is already in the room gets notification on #info1: 'name has disconnected' and then after maybe 1 second 'name has connected'
+
+on uniteLonelyPlayers() message to player 
+
+player that is beeing transfered to above mentioned room gets notification on #info1: 'name has disconnected' and then after maybe 1 second 'name has connected' 
+
+--- solved
+
+
+
+on idle socket disconnect: 
+
+/home/theironduke/webdev/JS_Kurs/Teil_4/TicTacToeWebS/server.js:117
+            obj.player1.emit('disableClient');              
+                        ^
+
+TypeError: Cannot read property 'emit' of undefined
+
+obj.player1 has been replaced with obj.player1backup - let's see if exception reoccurs
+
+
+
+if player1 connects and enters name and player2 connects and enters name player2 info4 doesn't display Your playing against name 
+only if player1 connects and player 2 connects and then both enter name player2 info4 displays Your playing against name 
+
+if two players in the room with name and tab two is closed and new tab opened ---> new tab doesn't display Your playing against name
+
+I think at the moment info4 displays Your playing against name only on user-connected. this has to be adapted to my needs
+
+that was because on enter player1 player2 emits his name only if player2 exists. if the first of the two above mentioned use cases occurs, nothing is emited 
+because player 2 doesn't exist yet. on player two connects and enter name only player 1 emits.
+So I added if (obj.player2) obj.player2.emit('user-connected', obj[obj.player1.id]);  which has solved the problem
+
+
+
+
+
+if two tabs without enter name yet, player 1 enters name info4 says 'you're playing against null' because player2 hasn't entered name yet. and presumably 
+the other way around.
+
+I guess I need a conditional which prevents emit in such a case. Something like: if player.name && blah blah... emit ---- solved
+
+
+
+after idle socket disconnect player1 info4 still says 'you're playing against blah...' 
+
+
+uniteLonelyPlayers() still hasn't been completed.  ----- done
+
+after idle socket timeout player one still has start game button ---- solved
+
+
+
+
+after uniteLonelyPlayers() player 2 (or player 1?) info 1 still displays 'name has disconnected' -- on start game it should be 'Welcome name. You're playing against name.
+possible solution: const playerInfo1 = {}; ---- solved
+
+on game won player2 also has start game button ----- solved
+
+personalize win message: instead of 'Game Over: Player X has won!' --> 'Game Over: name has won!' --- solved
+
+
+
+
+
+write documentation:
+
+how double emit is beeing avoided (mostly)
+
+how object instances are beeing employed 
+
+and so forth
+
+
+styling:
+
+position enter-name-field in the middle of gamefield using js --- solved
+
+below gamefield button send message to name 
+
+
+
+
+
+24.10.
+
+situation:
+
+code refactored: constructor function, prototype, this
+
+prob:
+
+4 players - disconnect gameRoom1 player 1 and gameRoom2 player 2 (without enter name):
+
+/home/theironduke/webdev/JS_Kurs/Teil_4/TicTacToeWebS/server.js:47
+      this[this.player1.id] = name;  
+
+TypeError: Cannot read property 'id' of undefined
+    at Socket.player1.on.name (/home/theironduke/webdev/JS_Kurs/Teil_4/TicTacToeWebS/server.js:47:25)
+    at Socket.emit (events.js:203:15)
+    at /home/theironduke/webdev/JS_Kurs/Teil_4/TicTacToeWebS/node_modules/socket.io/lib/socket.js:503:12
+    at process._tickCallback (internal/process/next_tick.js:61:11)
+
+
+I think the reason for this is that the this keywords point to an abject which doesn't exist anymore --> solution replace this with roomsArray[index];
+
+
+otherwhise replace this.player1 with this.playerbackup1 (and likeweise for player2);

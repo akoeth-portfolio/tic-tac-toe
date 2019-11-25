@@ -1,0 +1,167 @@
+@media only screen and (min-width: 598px) {
+  html {  
+    height: 40em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+} 
+
+
+/* html {  
+  height: 40em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} */
+
+
+body {
+  display: flex;
+  flex-direction: row;
+  background-color: rgba(0,0,0,0);
+  justify-content: space-around;
+}
+
+.screen-in-portrait-mode {
+  flex-direction: column !important;
+}
+
+#TikTakToe {
+  margin: 0 auto;
+  display: flex;
+  position: static;
+  /* flex-direction: column; */
+  justify-content: center;
+  background-color: rgba(0,0,0,0);
+}
+
+#gamefield {  
+  width: 15.8em;   
+}
+
+@media only screen and (min-width: 598px) {
+  #gamefield {  
+    width: max-content;
+  }
+}
+
+.button {
+  height: 1.75em;
+  width: 1.75em;
+  vertical-align: bottom;
+  font-size: 3em;
+  padding: 0; 
+}
+
+@media only screen and (min-width: 598px) {
+  .button {
+    height: 2.25em !important;
+    width: 2.25em !important;
+  }
+}
+
+@media only screen and (min-width: 799px) {
+  .button {
+    height: 2.5em;
+    width: 2.5em;
+  }
+}
+
+#info1and2container {
+  display: flex;
+  flex-direction: row;  
+  height: 1.5em !important;
+  justify-content: center;
+}
+
+.info {
+  font-size: 0.9em;
+  color: red;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  text-align: center;
+}
+
+#info1 {  
+  text-align: center;
+}
+
+#info2 {
+  color: coral; 
+}
+
+p {
+  margin: 0;
+}
+
+@media only screen and (min-width: 598px) {
+  .info {
+    font-size: 0.75em;
+  }
+}
+
+@media only screen and (min-width: 799px) {
+  .info {
+    font-size: 1em;
+  }
+}
+
+#player-name-input {  
+  background: black;
+  opacity: 0.5;
+  text-align: center;
+  font-size: 1.25em;
+  font-weight: bold;
+  color: white;
+}
+
+.player-name-input-remove {
+  display: none;
+}
+
+.welcome-field-display-none {
+  display: none;
+}
+
+.reconnect-button-display-none {
+  display: none;
+}
+
+
+/* chat area */
+
+#chat-area {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column; 
+}
+
+@media only screen and (min-width: 1150px) {
+  #chat-area {
+    margin-left: 2em;
+  }
+}
+
+.chat-area-display-none {
+  display: none !important;
+}
+
+.chat-area-diplay-none {
+  display: none !important;
+}
+
+#message-window {
+  overflow-y: auto;
+  height: 10em;
+  width: 15em;
+  border-style: solid;
+  border-width: 2px;
+  border-color: red;
+  margin: 0 auto;
+  margin-top: 1.5em;
+}
+
+#message-input {
+  margin: 0 auto;
+  margin-top: 1em;
+}
